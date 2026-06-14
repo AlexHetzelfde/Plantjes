@@ -6,9 +6,69 @@
   <title>🌿 Mijn Plantengids</title>
   <script type="module">
     import { h, render } from 'https://esm.sh/preact@10.19.3';
-    import { useState } from 'https://esm.sh/preact@10.19.3/hooks';
+    import { useState, useEffect } from 'https://esm.sh/preact@10.19.3/hooks';
     import { html } from 'https://esm.sh/htm@3.1.1/preact';
 
+    // ---------------------------------------------------------------
+    // IndexedDB helpers voor het opslaan van foto's per plant
+    // ---------------------------------------------------------------
+    const DB_NAME = "plantengids-db";
+    const STORE_NAME = "photos";
+
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = () => {
+          req.result.createObjectStore(STORE_NAME);
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function savePhoto(plantId, dataUrl) {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, "readwrite");
+        tx.objectStore(STORE_NAME).put(dataUrl, plantId);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function deletePhoto(plantId) {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, "readwrite");
+        tx.objectStore(STORE_NAME).delete(plantId);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function getAllPhotos() {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, "readonly");
+        const store = tx.objectStore(STORE_NAME);
+        const result = {};
+        const cursorReq = store.openCursor();
+        cursorReq.onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (cursor) {
+            result[cursor.key] = cursor.value;
+            cursor.continue();
+          } else {
+            resolve(result);
+          }
+        };
+        cursorReq.onerror = () => reject(cursorReq.error);
+      });
+    }
+
+    // ---------------------------------------------------------------
+    // Data
+    // ---------------------------------------------------------------
     const plants = [
       {
         id: 1,
@@ -158,44 +218,48 @@
       },
     ];
 
+    function getPlantById(id) {
+      return plants.find(p => p.id === id);
+    }
+
     const schedule = [
       {
         day: "Maandag",
         color: "#4a8a3a",
         tasks: [
-          { plant: "Coleus 🎨", action: "Water geven" },
-          { plant: "Begonia maculata 🔵", action: "Check grond — water als droog" },
+          { plant: "Coleus 🎨", action: "Water geven", plantId: 3 },
+          { plant: "Begonia maculata 🔵", action: "Check grond — water als droog", plantId: 2 },
         ],
       },
       {
         day: "Dinsdag",
         color: "#5a7a8a",
         tasks: [
-          { plant: "Zonnedauw 🪲", action: "Schoteltje bijvullen met demiwater" },
+          { plant: "Zonnedauw 🪲", action: "Schoteltje bijvullen met demiwater", plantId: 7 },
         ],
       },
       {
         day: "Woensdag",
         color: "#4a8a3a",
         tasks: [
-          { plant: "Coleus 🎨", action: "Water geven (2e keer)" },
-          { plant: "Begonia maculata 🔵", action: "Water geven" },
-          { plant: "Vetblad 🫧", action: "Check grond — water als bijna droog" },
+          { plant: "Coleus 🎨", action: "Water geven (2e keer)", plantId: 3 },
+          { plant: "Begonia maculata 🔵", action: "Water geven", plantId: 2 },
+          { plant: "Vetblad 🫧", action: "Check grond — water als bijna droog", plantId: 8 },
         ],
       },
       {
         day: "Donderdag",
         color: "#6a8a2a",
         tasks: [
-          { plant: "Citroenpelargonium 🍋", action: "Water geven (beide planten)" },
-          { plant: "Pepermuntgeranium 🌿", action: "Water geven" },
+          { plant: "Citroenpelargonium 🍋", action: "Water geven (beide planten)", plantId: 1 },
+          { plant: "Pepermuntgeranium 🌿", action: "Water geven", plantId: 5 },
         ],
       },
       {
         day: "Vrijdag",
         color: "#5a7a8a",
         tasks: [
-          { plant: "Zonnedauw 🪲", action: "Schoteltje bijvullen met demiwater" },
+          { plant: "Zonnedauw 🪲", action: "Schoteltje bijvullen met demiwater", plantId: 7 },
         ],
       },
       {
@@ -203,8 +267,8 @@
         color: "#8a6a2a",
         tasks: [
           { plant: "Alle planten 🌱", action: "Korte check: zien ze er goed uit? Dode bladeren verwijderen" },
-          { plant: "Geldboom 🌳", action: "Water geven (1× per 1–2 weken)" },
-          { plant: "Mammillaria 🌵", action: "Check — water alleen als grond kurk-droog is" },
+          { plant: "Geldboom 🌳", action: "Water geven (1× per 1–2 weken)", plantId: 4 },
+          { plant: "Mammillaria 🌵", action: "Check — water alleen als grond kurk-droog is", plantId: 6 },
         ],
       },
       {
@@ -216,7 +280,31 @@
       },
     ];
 
-    function PlantCard({ plant, onClick }) {
+    // ---------------------------------------------------------------
+    // Componenten
+    // ---------------------------------------------------------------
+    function PlantThumb({ photo, emoji, size }) {
+      return html`
+        <div style=${{
+          width: "100%",
+          height: size,
+          borderRadius: "12px",
+          overflow: "hidden",
+          marginBottom: "8px",
+          background: "rgba(255,255,255,0.5)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: size === "70px" ? "30px" : "44px",
+        }}>
+          ${photo
+            ? html`<img src=${photo} style=${{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />`
+            : emoji}
+        </div>
+      `;
+    }
+
+    function PlantCard({ plant, photo, onClick }) {
       return html`
         <button
           onClick=${onClick}
@@ -234,7 +322,7 @@
           onMouseOver=${e => e.currentTarget.style.transform = "scale(1.02)"}
           onMouseOut=${e => e.currentTarget.style.transform = "scale(1)"}
         >
-          <div style=${{ fontSize: "30px", marginBottom: "8px" }}>${plant.emoji}</div>
+          <${PlantThumb} photo=${photo} emoji=${plant.emoji} size="70px" />
           <div style=${{ fontSize: "14px", fontWeight: "700", color: plant.colorAccent, lineHeight: "1.2" }}>
             ${plant.name}
           </div>
@@ -257,7 +345,18 @@
       `;
     }
 
-    function PlantDetail({ plant, onBack }) {
+    function PlantDetail({ plant, photo, onUpload, onRemovePhoto, onBack }) {
+      const fileInputId = `file-input-${plant.id}`;
+
+      const handleFileChange = (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => onUpload(reader.result);
+        reader.readAsDataURL(file);
+        e.target.value = "";
+      };
+
       return html`
         <div>
           <button
@@ -289,13 +388,55 @@
               borderBottom: `3px solid ${plant.colorAccent}40`,
               padding: "24px 20px",
             }}>
-              <div style=${{ fontSize: "44px", marginBottom: "10px" }}>${plant.emoji}</div>
+              <${PlantThumb} photo=${photo} emoji=${plant.emoji} size="160px" />
               <h2 style=${{ margin: "0 0 4px", fontSize: "22px", fontWeight: "800", color: plant.colorAccent }}>
                 ${plant.name}
               </h2>
-              <p style=${{ margin: 0, color: "#888", fontSize: "13px", fontStyle: "italic" }}>
+              <p style=${{ margin: "0 0 14px", color: "#888", fontSize: "13px", fontStyle: "italic" }}>
                 ${plant.latin}
               </p>
+
+              <div style=${{ display: "flex", gap: "8px" }}>
+                <label
+                  for=${fileInputId}
+                  style=${{
+                    background: plant.colorAccent,
+                    color: "white",
+                    borderRadius: "8px",
+                    padding: "8px 14px",
+                    fontSize: "12px",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                  }}
+                >
+                  📷 ${photo ? "Foto wijzigen" : "Foto toevoegen"}
+                </label>
+                <input
+                  id=${fileInputId}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange=${handleFileChange}
+                  style=${{ display: "none" }}
+                />
+                ${photo ? html`
+                  <button
+                    onClick=${onRemovePhoto}
+                    style=${{
+                      background: "rgba(255,255,255,0.6)",
+                      color: plant.colorAccent,
+                      border: "none",
+                      borderRadius: "8px",
+                      padding: "8px 14px",
+                      fontSize: "12px",
+                      fontWeight: "700",
+                      cursor: "pointer",
+                    }}
+                  >
+                    🗑️ Verwijderen
+                  </button>
+                ` : ""}
+              </div>
             </div>
 
             <div style=${{ padding: "20px" }}>
@@ -348,7 +489,7 @@
       `;
     }
 
-    function ScheduleTab() {
+    function ScheduleTab({ photos }) {
       const today = new Date().toLocaleDateString('nl-NL', { weekday: 'long' });
       const todayCapital = today.charAt(0).toUpperCase() + today.slice(1);
 
@@ -380,20 +521,42 @@
                   ${day.day}
                   ${isToday ? html`<span style=${{ background: "rgba(255,255,255,0.3)", borderRadius: "4px", padding: "1px 7px", fontSize: "11px" }}>vandaag</span>` : ""}
                 </div>
-                ${day.tasks.map((task, j) => html`
+                ${day.tasks.map((task, j) => {
+                  const photo = task.plantId ? photos[task.plantId] : null;
+                  const plantData = task.plantId ? getPlantById(task.plantId) : null;
+                  return html`
                   <div key=${j} style=${{
                     padding: "10px 14px",
                     borderBottom: j < day.tasks.length - 1 ? "1px solid #f0f4ee" : "none",
                     display: "flex",
                     gap: "12px",
-                    alignItems: "flex-start",
+                    alignItems: "center",
                   }}>
+                    ${plantData ? html`
+                      <div style=${{
+                        width: "32px",
+                        height: "32px",
+                        borderRadius: "8px",
+                        overflow: "hidden",
+                        flexShrink: 0,
+                        background: plantData.colorBg,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "16px",
+                      }}>
+                        ${photo
+                          ? html`<img src=${photo} style=${{ width: "100%", height: "100%", objectFit: "cover" }} />`
+                          : plantData.emoji}
+                      </div>
+                    ` : ""}
                     <span style=${{ fontSize: "13px", fontWeight: "600", minWidth: "150px", color: day.color, flexShrink: 0 }}>
                       ${task.plant}
                     </span>
                     <span style=${{ fontSize: "13px", color: "#444" }}>${task.action}</span>
                   </div>
-                `)}
+                  `;
+                })}
               </div>
             `;
           })}
@@ -416,8 +579,33 @@
     function App() {
       const [tab, setTab] = useState("schema");
       const [activePlantId, setActivePlantId] = useState(null);
+      const [photos, setPhotos] = useState({});
+      const [loadingPhotos, setLoadingPhotos] = useState(true);
+
+      useEffect(() => {
+        getAllPhotos()
+          .then(setPhotos)
+          .catch(() => {})
+          .finally(() => setLoadingPhotos(false));
+      }, []);
 
       const activePlant = plants.find(p => p.id === activePlantId);
+
+      const handleUpload = (plantId, dataUrl) => {
+        savePhoto(plantId, dataUrl)
+          .then(() => setPhotos(prev => ({ ...prev, [plantId]: dataUrl })))
+          .catch(() => alert("Foto opslaan is mislukt. Probeer een kleinere afbeelding."));
+      };
+
+      const handleRemovePhoto = (plantId) => {
+        deletePhoto(plantId)
+          .then(() => setPhotos(prev => {
+            const next = { ...prev };
+            delete next[plantId];
+            return next;
+          }))
+          .catch(() => {});
+      };
 
       return html`
         <div style=${{ fontFamily: "'Segoe UI', system-ui, sans-serif", minHeight: "100vh", background: "#f0f4ee", color: "#1a2a1a" }}>
@@ -440,7 +628,6 @@
             background: "white",
             borderBottom: "2px solid #e0eadc",
           }}>
-          
             ${[
               { id: "schema", label: "📅 Schema" },
               { id: "planten", label: "🌱 Planten" },
@@ -468,18 +655,19 @@
 
           <div style=${{ padding: "16px", maxWidth: "560px", margin: "0 auto" }}>
 
-            ${tab === "schema" ? html`<${ScheduleTab} />` : ""}
+            ${loadingPhotos ? "" : tab === "schema" ? html`<${ScheduleTab} photos=${photos} />` : ""}
 
-            ${tab === "planten" && !activePlantId ? html`
+            ${!loadingPhotos && tab === "planten" && !activePlantId ? html`
               <div>
                 <p style=${{ color: "#666", fontSize: "13px", marginBottom: "16px" }}>
-                  Tik op een plant voor uitgebreide verzorgingsinfo.
+                  Tik op een plant voor uitgebreide verzorgingsinfo. Daar kun je ook een eigen foto toevoegen.
                 </p>
                 <div style=${{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                   ${plants.map(plant => html`
                     <${PlantCard}
                       key=${plant.id}
                       plant=${plant}
+                      photo=${photos[plant.id]}
                       onClick=${() => setActivePlantId(plant.id)}
                     />
                   `)}
@@ -487,9 +675,12 @@
               </div>
             ` : ""}
 
-            ${tab === "planten" && activePlantId && activePlant ? html`
+            ${!loadingPhotos && tab === "planten" && activePlantId && activePlant ? html`
               <${PlantDetail}
                 plant=${activePlant}
+                photo=${photos[activePlant.id]}
+                onUpload=${dataUrl => handleUpload(activePlant.id, dataUrl)}
+                onRemovePhoto=${() => handleRemovePhoto(activePlant.id)}
                 onBack=${() => setActivePlantId(null)}
               />
             ` : ""}
