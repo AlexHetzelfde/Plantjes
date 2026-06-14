@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🌿 Mijn Plantengids</title>
+  <script type="module">
+    import { h, render } from 'https://esm.sh/preact@10.19.3';
+    import { useState } from 'https://esm.sh/preact@10.19.3/hooks';
+    import { html } from 'https://esm.sh/htm@3.1.1/preact';
+
+    const plants = [
+      {
+        id: 1,
+        emoji: "🍋",
+        name: "Citroenpelargonium",
+        latin: "Pelargonium crispum",
+        colorBg: "#e8f0d8",
+        colorAccent: "#4a6a1a",
+        desc: "Geurende geranium met diep ingesneden lichtgroene blaadjes. Ruikt sterk naar citroen als je eraan wrijft. Je hebt er twee van: een hangend exemplaar (groeit flink door) en een in pot (heeft wat bruine bladeren onderaan — die mag je gewoon verwijderen).",
+        water: "1× per week",
+        waterDetail: "Laat de grond tussendoor goed opdrogen. Nooit in water laten staan.",
+        light: "Zoveel mogelijk zon",
+        lightDetail: "Zuid- of westraam. Hoe meer zon, hoe geuriger.",
+        tips: [
+          "Bruine onderblaadjes gewoon weghalen",
+          "Makkelijk te stekken: snij een takje af en zet in water",
+          "Kan lila of roze bloemetjes geven in het voorjaar",
+        ],
+      },
+      {
+        id: 2,
+        emoji: "🔵",
+        name: "Polkadotbegonia",
+        latin: "Begonia maculata",
+        colorBg: "#d8ede6",
+        colorAccent: "#1a5a3a",
+        desc: "Donkergroene bladeren met opvallende witte vlekken en een rode onderkant. Oorspronkelijk uit Brazilië. Ziet er nu vrij kaal uit met weinig bladeren — ze heeft het waarschijnlijk moeilijk gehad. Met de juiste plek en verzorging groeit ze snel bij.",
+        water: "1–2× per week",
+        waterDetail: "Grond licht vochtig houden, maar nooit in water laten staan. Gebruik bij voorkeur water op kamertemperatuur.",
+        light: "Helder indirect licht",
+        lightDetail: "Oost- of westraam. Geen felle middagzon — dan verbranden de bladeren.",
+        tips: [
+          "Houdt van hoge luchtvochtigheid — af en toe spuiten mag",
+          "Kan roze of witte bloemen geven",
+          "Geef haar een beetje meer licht dan ze nu heeft",
+        ],
+      },
+      {
+        id: 3,
+        emoji: "🎨",
+        name: "Coleus",
+        latin: "Plectranthus scutellarioides",
+        colorBg: "#f0e8c8",
+        colorAccent: "#7a5a00",
+        desc: "Gekweekt puur voor de kleurrijke bladeren: lime-groen met een roodbruin hart. Ziet er nu gezond en compact uit — goed bezig! Groeit snel als ze genoeg licht krijgt.",
+        water: "2× per week",
+        waterDetail: "Houdt van vochtige grond. Niet laten uitdrogen, maar ook niet doornat.",
+        light: "Helder licht, geen volle zon",
+        lightDetail: "Oost- of westraam. In de felle zon verbranden de bladeren.",
+        tips: [
+          "Bloemetjes weghalen zodat de plant energie in de bladeren steekt",
+          "Groeit snel — geef hem ruimte",
+          "Meer licht = fellere bladkleuren",
+        ],
+      },
+      {
+        id: 4,
+        emoji: "🌳",
+        name: "Geldboom",
+        latin: "Pachira aquatica",
+        colorBg: "#d8edd8",
+        colorAccent: "#1a5a1a",
+        desc: "Tropische boom met de kenmerkende gevlochten stam en handvormige bladeren met 5–7 blaadjes. Symbool voor geluk en voorspoed. Ziet er nu groot en gezond uit — groeit duidelijk goed door richting het plafond.",
+        water: "1× per 1–2 weken",
+        waterDetail: "Laat de grond goed drogen tussen de beurten. Te veel water is de grootste vijand — wortels rotten snel.",
+        light: "Helder tot halfschaduw",
+        lightDetail: "Verdraagt ook minder lichte plekken prima. Geen felle zon noodzakelijk.",
+        tips: [
+          "Draai de pot af en toe zodat alle kanten licht krijgen",
+          "Repot als de wortels uit de pot steken",
+          "Symbool voor geluk — populair cadeau in Aziatische cultuur",
+        ],
+      },
+      {
+        id: 5,
+        emoji: "🌿",
+        name: "Pepermuntgeranium",
+        latin: "Pelargonium tomentosum",
+        colorBg: "#d8edd8",
+        colorAccent: "#2a6a3a",
+        desc: "Ronde, zachte fluweelachtige bladeren die sterk naar pepermunt ruiken. Groeit breed en hangend. Heeft nu wat bruine bladranden — dit komt waarschijnlijk door iets te veel water. Laat hem even goed uitdrogen.",
+        water: "1× per week of minder",
+        waterDetail: "Laat de grond echt opdrogen tussen de beurten. Wortels rotten snel bij te veel vocht.",
+        light: "Helder licht",
+        lightDetail: "Geen felle middagzon nodig. Oost- of westraam is prima.",
+        tips: [
+          "Bruine randen? Minder water geven",
+          "Ruikt heerlijk — zet hem op een plek waar je er langs loopt",
+          "Hangt mooi over de rand van een pot",
+        ],
+      },
+      {
+        id: 6,
+        emoji: "🌵",
+        name: "Mammillaria",
+        latin: "Mammillaria sp.",
+        colorBg: "#f0e8d0",
+        colorAccent: "#7a5020",
+        desc: "Bolronde cactus met witte wollige areolen en roodbruine stekels. Een van de makkelijkste cactusgeslachten. Ziet er nu prima uit met een mooie groene kleur. Let op het kleine donkere vlekje op het oppervlak — houd dat in de gaten.",
+        water: "Zomer: 1× per 2 weken\nWinter: 1× per maand",
+        waterDetail: "Laat de grond volledig uitdrogen tussen de beurten. In de winter bijna niets geven.",
+        light: "Zoveel mogelijk zon",
+        lightDetail: "Liefst een zuidraam. Hoe meer zon, hoe gelukkiger.",
+        tips: [
+          "Het donkere vlekje in de gaten houden — kan rot zijn",
+          "Nooit water op de cactus zelf gooien",
+          "Kan in het voorjaar een kransje kleine bloemetjes geven",
+        ],
+      },
+      {
+        id: 7,
+        emoji: "🪲",
+        name: "Zonnedauw",
+        latin: "Drosera capensis",
+        colorBg: "#fde0d8",
+        colorAccent: "#901010",
+        desc: "Vleesetende plant met kleine slijmerige druppels op de bladeren waarmee ze insecten vangt. Fantastisch tegen fruitvliegjes! Beginnersvriendelijk maar heeft heel specifieke verzorging nodig — kraanwater is dodelijk voor hem.",
+        water: "Altijd nat houden",
+        waterDetail: "Zet de pot in een schoteltje met ALLEEN demiwater of regenwater. Nooit kraanwater. Nooit laten uitdrogen.",
+        light: "Veel direct licht",
+        lightDetail: "Vensterbank met zoveel mogelijk zon. Bij weinig licht verliest hij zijn rode kleur.",
+        tips: [
+          "⚠️ Uitsluitend demiwater of regenwater — kraanwater doodt hem",
+          "Turf (veenmos) als substraat, geen gewone potgrond",
+          "Nooit meststoffen geven — plant haalt voeding uit insecten",
+          "Perfecte fruitvliegjesbestrijder, zet hem in de keuken",
+        ],
+      },
+      {
+        id: 8,
+        emoji: "🫧",
+        name: "Vetblad",
+        latin: "Pinguicula agnata",
+        colorBg: "#e8d8f4",
+        colorAccent: "#4a2080",
+        desc: "Vleesetende plant met dikke, vette bladeren die werken als plakpapier voor kleine vliegjes. Subtielere vangtechniek dan de Zonnedauw maar net zo effectief. Iets minder veeleisend en een geweldige aanvulling op de Drosera.",
+        water: "1× per week",
+        waterDetail: "Laat de grond tussendoor iets opdrogen. Kan in beperkte mate kraanwater verdragen, maar demiwater is beter.",
+        light: "Helder indirect licht",
+        lightDetail: "Felle directe zon kan de blaadjes verbranden. Oost- of westraam werkt goed.",
+        tips: [
+          "Mineraalmix als substraat, geen gewone potgrond",
+          "Kan kleine sierlijke bloemetjes geven",
+          "Mag iets opdrogen tussen waterbeurten, anders dan de Zonnedauw",
+          "Samen met de Zonnedauw een geweldig duo tegen vliegjes",
+        ],
+      },
+    ];
+
+    const schedule = [
+      {
+        day: "Maandag",
+        color: "#4a8a3a",
+        tasks: [
+          { plant: "Coleus 🎨", action: "Water geven" },
+          { plant: "Begonia maculata 🔵", action: "Check grond — water als droog" },
+        ],
+      },
+      {
+        day: "Dinsdag",
+        color: "#5a7a8a",
+        tasks: [
+          { plant: "Zonnedauw 🪲", action: "Schoteltje bijvullen met demiwater" },
+        ],
+      },
+      {
+        day: "Woensdag",
+        color: "#4a8a3a",
+        tasks: [
+          { plant: "Coleus 🎨", action: "Water geven (2e keer)" },
+          { plant: "Begonia maculata 🔵", action: "Water geven" },
+          { plant: "Vetblad 🫧", action: "Check grond — water als bijna droog" },
+        ],
+      },
+      {
+        day: "Donderdag",
+        color: "#6a8a2a",
+        tasks: [
+          { plant: "Citroenpelargonium 🍋", action: "Water geven (beide planten)" },
+          { plant: "Pepermuntgeranium 🌿", action: "Water geven" },
+        ],
+      },
+      {
+        day: "Vrijdag",
+        color: "#5a7a8a",
+        tasks: [
+          { plant: "Zonnedauw 🪲", action: "Schoteltje bijvullen met demiwater" },
+        ],
+      },
+      {
+        day: "Zaterdag",
+        color: "#8a6a2a",
+        tasks: [
+          { plant: "Alle planten 🌱", action: "Korte check: zien ze er goed uit? Dode bladeren verwijderen" },
+          { plant: "Geldboom 🌳", action: "Water geven (1× per 1–2 weken)" },
+          { plant: "Mammillaria 🌵", action: "Check — water alleen als grond kurk-droog is" },
+        ],
+      },
+      {
+        day: "Zondag",
+        color: "#888",
+        tasks: [
+          { plant: "Rustdag 🌞", action: "Genieten van je planten!" },
+        ],
+      },
+    ];
+
+    function PlantCard({ plant, onClick }) {
+      return html`
+        <button
+          onClick=${onClick}
+          style=${{
+            background: plant.colorBg,
+            border: "none",
+            borderRadius: "14px",
+            padding: "16px 14px",
+            cursor: "pointer",
+            textAlign: "left",
+            width: "100%",
+            transition: "transform 0.1s, box-shadow 0.1s",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
+          }}
+          onMouseOver=${e => e.currentTarget.style.transform = "scale(1.02)"}
+          onMouseOut=${e => e.currentTarget.style.transform = "scale(1)"}
+        >
+          <div style=${{ fontSize: "30px", marginBottom: "8px" }}>${plant.emoji}</div>
+          <div style=${{ fontSize: "14px", fontWeight: "700", color: plant.colorAccent, lineHeight: "1.2" }}>
+            ${plant.name}
+          </div>
+          <div style=${{ fontSize: "11px", color: "#888", marginTop: "2px", fontStyle: "italic" }}>
+            ${plant.latin}
+          </div>
+          <div style=${{
+            marginTop: "10px",
+            background: "rgba(255,255,255,0.6)",
+            color: plant.colorAccent,
+            borderRadius: "6px",
+            padding: "4px 8px",
+            fontSize: "11px",
+            display: "inline-block",
+            fontWeight: "600",
+          }}>
+            💧 ${plant.water}
+          </div>
+        </button>
+      `;
+    }
+
+    function PlantDetail({ plant, onBack }) {
+      return html`
+        <div>
+          <button
+            onClick=${onBack}
+            style=${{
+              background: "none",
+              border: "none",
+              color: "#2d5a27",
+              cursor: "pointer",
+              fontSize: "14px",
+              fontWeight: "600",
+              padding: "0 0 14px",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
+            ← Terug naar overzicht
+          </button>
+
+          <div style=${{
+            background: "white",
+            borderRadius: "16px",
+            overflow: "hidden",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+          }}>
+            <div style=${{
+              background: plant.colorBg,
+              borderBottom: \`3px solid \${plant.colorAccent}40\`,
+              padding: "24px 20px",
+            }}>
+              <div style=${{ fontSize: "44px", marginBottom: "10px" }}>${plant.emoji}</div>
+              <h2 style=${{ margin: "0 0 4px", fontSize: "22px", fontWeight: "800", color: plant.colorAccent }}>
+                ${plant.name}
+              </h2>
+              <p style=${{ margin: 0, color: "#888", fontSize: "13px", fontStyle: "italic" }}>
+                ${plant.latin}
+              </p>
+            </div>
+
+            <div style=${{ padding: "20px" }}>
+              <p style=${{ fontSize: "14px", color: "#333", lineHeight: "1.7", margin: "0 0 20px" }}>
+                ${plant.desc}
+              </p>
+
+              <div style=${{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "20px" }}>
+                <div style=${{ background: "#e8f4ff", borderRadius: "12px", padding: "14px" }}>
+                  <div style=${{ fontSize: "20px", marginBottom: "6px" }}>💧</div>
+                  <div style=${{ fontSize: "11px", fontWeight: "700", color: "#1a4a8a", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Water</div>
+                  <div style=${{ fontSize: "13px", fontWeight: "700", color: "#1a4a8a", marginBottom: "6px" }}>
+                    ${plant.water}
+                  </div>
+                  <div style=${{ fontSize: "12px", color: "#555", lineHeight: "1.5" }}>
+                    ${plant.waterDetail}
+                  </div>
+                </div>
+                <div style=${{ background: "#fff8e0", borderRadius: "12px", padding: "14px" }}>
+                  <div style=${{ fontSize: "20px", marginBottom: "6px" }}>☀️</div>
+                  <div style=${{ fontSize: "11px", fontWeight: "700", color: "#7a5a00", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Licht</div>
+                  <div style=${{ fontSize: "13px", fontWeight: "700", color: "#7a5a00", marginBottom: "6px" }}>
+                    ${plant.light}
+                  </div>
+                  <div style=${{ fontSize: "12px", color: "#555", lineHeight: "1.5" }}>
+                    ${plant.lightDetail}
+                  </div>
+                </div>
+              </div>
+
+              <div style=${{ background: "#f4faf0", borderRadius: "12px", padding: "14px 16px" }}>
+                <div style=${{ fontSize: "12px", fontWeight: "700", color: "#2d5a27", marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  💡 Tips
+                </div>
+                ${plant.tips.map((tip, i) => html`
+                  <div key=${i} style=${{
+                    fontSize: "13px",
+                    color: "#333",
+                    padding: "8px 0",
+                    borderTop: i > 0 ? "1px solid #ddeedd" : "none",
+                    lineHeight: "1.5",
+                  }}>
+                    ${tip}
+                  </div>
+                `)}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function ScheduleTab() {
+      const today = new Date().toLocaleDateString('nl-NL', { weekday: 'long' });
+      const todayCapital = today.charAt(0).toUpperCase() + today.slice(1);
+
+      return html`
+        <div>
+          <p style=${{ color: "#666", fontSize: "13px", marginBottom: "16px", lineHeight: "1.5" }}>
+            Wekelijks terugkerend schema. Vandaag is het <strong>${todayCapital}</strong>.
+          </p>
+          ${schedule.map((day, i) => {
+            const isToday = day.day.toLowerCase() === today.toLowerCase();
+            return html`
+              <div key=${i} style=${{
+                background: "white",
+                borderRadius: "12px",
+                marginBottom: "10px",
+                overflow: "hidden",
+                boxShadow: isToday ? \`0 0 0 2px \${day.color}\` : "0 1px 4px rgba(0,0,0,0.07)",
+              }}>
+                <div style=${{
+                  background: day.color,
+                  color: "white",
+                  padding: "8px 14px",
+                  fontWeight: "700",
+                  fontSize: "13px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}>
+                  ${day.day}
+                  ${isToday ? html`<span style=${{ background: "rgba(255,255,255,0.3)", borderRadius: "4px", padding: "1px 7px", fontSize: "11px" }}>vandaag</span>` : ""}
+                </div>
+                ${day.tasks.map((task, j) => html`
+                  <div key=${j} style=${{
+                    padding: "10px 14px",
+                    borderBottom: j < day.tasks.length - 1 ? "1px solid #f0f4ee" : "none",
+                    display: "flex",
+                    gap: "12px",
+                    alignItems: "flex-start",
+                  }}>
+                    <span style=${{ fontSize: "13px", fontWeight: "600", minWidth: "150px", color: day.color, flexShrink: 0 }}>
+                      ${task.plant}
+                    </span>
+                    <span style=${{ fontSize: "13px", color: "#444" }}>${task.action}</span>
+                  </div>
+                `)}
+              </div>
+            `;
+          })}
+          <div style=${{
+            background: "#fff8e8",
+            border: "1px solid #f0d070",
+            borderRadius: "10px",
+            padding: "12px 14px",
+            fontSize: "12px",
+            color: "#7a5a00",
+            marginTop: "4px",
+            lineHeight: "1.5",
+          }}>
+            💡 <strong>Tip:</strong> Zet de Zonnedauw in de keuken — hij eet je fruitvliegjes op!
+          </div>
+        </div>
+      `;
+    }
+
+    function App() {
+      const [tab, setTab] = useState("schema");
+      const [activePlantId, setActivePlantId] = useState(null);
+
+      const activePlant = plants.find(p => p.id === activePlantId);
+
+      return html`
+        <div style=${{ fontFamily: "'Segoe UI', system-ui, sans-serif", minHeight: "100vh", background: "#f0f4ee", color: "#1a2a1a" }}>
+
+          <!-- Header -->
+          <div style=${{
+            background: "linear-gradient(135deg, #1e4020 0%, #3a7a30 100%)",
+            color: "white",
+            padding: "28px 20px 22px",
+            textAlign: "center",
+          }}>
+            <div style=${{ fontSize: "36px", marginBottom: "8px" }}>🌿</div>
+            <h1 style=${{ margin: "0 0 4px", fontSize: "22px", fontWeight: "800", letterSpacing: "-0.5px" }}>
+              Mijn Plantengids
+            </h1>
+            <p style=${{ margin: 0, opacity: 0.75, fontSize: "13px" }}>8 planten · verzorging & schema</p>
+          </div>
+
+          <!-- Tabs -->
+          <div style=${{
+            display: "flex",
+            background: "white",
+            borderBottom: "2px solid #e0eadc",
+          }}>
+            ${[
+              { id: "schema", label: "📅 Schema" },
+              { id: "planten", label: "🌱 Planten" },
+            ].map(t => html`
+              <button
+                key=${t.id}
+                onClick=${() => { setTab(t.id); setActivePlantId(null); }}
+                style=${{
+                  flex: 1,
+                  padding: "14px 8px",
+                  border: "none",
+                  background: "none",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: tab === t.id ? "700" : "400",
+                  color: tab === t.id ? "#2d5a27" : "#888",
+                  borderBottom: tab === t.id ? "3px solid #2d5a27" : "3px solid transparent",
+                  transition: "all 0.15s",
+                }}
+              >
+                ${t.label}
+              </button>
+            `)}
+          </div>
+
+          <!-- Content -->
+          <div style=${{ padding: "16px", maxWidth: "560px", margin: "0 auto" }}>
+
+            ${tab === "schema" ? html`<${ScheduleTab} />` : ""}
+
+            ${tab === "planten" && !activePlantId ? html`
+              <div>
+                <p style=${{ color: "#666", fontSize: "13px", marginBottom: "16px" }}>
+                  Tik op een plant voor uitgebreide verzorgingsinfo.
+                </p>
+                <div style=${{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                  ${plants.map(plant => html`
+                    <${PlantCard}
+                      key=${plant.id}
+                      plant=${plant}
+                      onClick=${() => setActivePlantId(plant.id)}
+                    />
+                  `)}
+                </div>
+              </div>
+            ` : ""}
+
+            ${tab === "planten" && activePlantId && activePlant ? html`
+              <${PlantDetail}
+                plant=${activePlant}
+                onBack=${() => setActivePlantId(null)}
+              />
+            ` : ""}
+
+          </div>
+        </div>
+      `;
+    }
+
+    render(h(App, null), document.getElementById("app"));
+  </script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #f0f4ee; }
+    button { -webkit-tap-highlight-color: transparent; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+</body>
+</html>
