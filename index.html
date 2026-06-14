@@ -422,7 +422,6 @@
       return html`
         <div style=${{ fontFamily: "'Segoe UI', system-ui, sans-serif", minHeight: "100vh", background: "#f0f4ee", color: "#1a2a1a" }}>
 
-          <!-- Header -->
           <div style=${{
             background: "linear-gradient(135deg, #1e4020 0%, #3a7a30 100%)",
             color: "white",
@@ -436,12 +435,12 @@
             <p style=${{ margin: 0, opacity: 0.75, fontSize: "13px" }}>8 planten · verzorging & schema</p>
           </div>
 
-          <!-- Tabs -->
           <div style=${{
             display: "flex",
             background: "white",
             borderBottom: "2px solid #e0eadc",
           }}>
+          
             ${[
               { id: "schema", label: "📅 Schema" },
               { id: "planten", label: "🌱 Planten" },
@@ -467,7 +466,6 @@
             `)}
           </div>
 
-          <!-- Content -->
           <div style=${{ padding: "16px", maxWidth: "560px", margin: "0 auto" }}>
 
             ${tab === "schema" ? html`<${ScheduleTab} />` : ""}
